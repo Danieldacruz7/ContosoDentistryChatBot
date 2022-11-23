@@ -3,10 +3,10 @@
 
 const { ActivityHandler } = require('botbuilder');
 var request = require('request');
-//const dotenv = require('dotenv');
+const dotenv = require('dotenv');
 
-//const ENV_FILE = './.env';
-//dotenv.config({ path: ENV_FILE });
+const ENV_FILE = './.env';
+dotenv.config({ path: ENV_FILE });
 
 /**
  * A simple bot that responds to utterances with answers from QnA Maker.
@@ -33,38 +33,70 @@ class QnABot extends ActivityHandler {
         this.onMessage(async (context, next) => {
             console.log('Running dialog with Message Activity.');
 
-            /*var headers = {
-                'Ocp-Apim-Subscription-Key': 'dfa0ed961c7849b89eb0132191b7ca75',
-                'Apim-Request-Id': '4ffcac1c-b2fc-48ba-bd6d-b69d9942995a',
+
+            var headers = {
+                'Ocp-Apim-Subscription-Key': process.env.OcpApimSubscriptionKey,
+                'Apim-Request-Id': process.env.ApimRequestId,
                 'Content-Type': 'application/json'
             };
 
-            var dataString = '{"kind":"Conversation","analysisInput":{"conversationItem":{"id":"1","text":"hello","modality":"text","language":"en-US","participantId":"1"}},"parameters":{"projectName":"dentist-assistant","verbose":true,"deploymentName":"dental-assistant-op","stringIndexType":"TextElement_V8"}}';
-            
+            var dataString = `{"kind":"Conversation","analysisInput":{"conversationItem":{"id":"1","text":"${context._activity.text}","modality":"text","language":"en-US","participantId":"1"}},"parameters":{"projectName":"dental-assistant-workflow","verbose":true,"deploymentName":"final-deployment","stringIndexType":"TextElement_V8"}}`;
+            //console.log(dataString);
+
             var options = {
-                url: 'https://myudacitylanguageservice10.cognitiveservices.azure.com/language/:analyze-conversations?api-version=2022-10-01-preview',
+                url: process.env.Endpoint,
                 method: 'POST',
                 headers: headers,
                 body: dataString
             };
-            
-            function callback(error, response, body) {
+
+            async function thefunction(context, state){
+                await this.dialog.run(context, state);
+            };
+
+            function callback(error, response, body) {     
+                //console.log(body);
+                //console.log(error);
+                //console.log(error);           
                 if (!error && response.statusCode == 200) {
                     var result = JSON.parse(body);
-                    //if(
-                    //    result['result']['prediction']['topIntent'] === 'GetAvailability'
-                    //)
-                    console.log("It works.");
-                    //console.log(result['result']['prediction']['topIntent']);
+                    console.log("------body------");
+                    console.log(result);
+                    console.log("------body------");
+                    //console.log(result['result']['prediction']['intents']['GeneralQueries']['result']['answers'][0]['answer']);
+                    console.log("------response------");
+                    //console.log(response);
+                    //console.log(result);
+                    //console.log("------response------");
+                    console.log(result['result']['prediction']['topIntent']);
+                    //console.log("------response------");
+                    //console.log(result['result']['prediction']['intents']);
+                    //console.log("------response------");
                     //console.log(result['result']['prediction']['intents']['GetAvailability']['confidenceScore']);
+
+                    if (result['result']['prediction']['topIntent'] === 'GetAvailablility' 
+                        && result['result']['prediction']['intents']['GetAvailablility']['confidenceScore'] > 0.5){
+                        console.log("Get available.");
+                        };
+                    if (result['result']['prediction']['topIntent'] === 'ScheduleApointment' 
+                        && result['result']['prediction']['intents']['ScheduleApointment']['confidenceScore'] > 0.5){
+                            console.log(result['result']['prediction']['intents']['ScheduleApointment']['result']['prediction']['entities'][0]['text']);
+                        }
+                    if (result['result']['prediction']['topIntent'] === 'GeneralQueries' 
+                        && result['result']['prediction']['intents']['GeneralQueries']['confidenceScore'] > 0.5){
+                            console.log(result['result']['prediction']['intents']['GeneralQueries']['result']['answers'][0]['answer']);
+                        }
+                   //else{
+                    //    thefunction(context, this.dialogState);
+                    //};*/
                 }
-                else{this.dialog.run(context, this.dialogState);};
+                
             }
 
-            request(options, callback);*/
+            request(options, callback);
 
             // Run the Dialog with the new message Activity.
-            await this.dialog.run(context, this.dialogState);
+            //await this.dialog.run(context, this.dialogState);
 
             // By calling next() you ensure that the next BotHandler is run.
             await next();
