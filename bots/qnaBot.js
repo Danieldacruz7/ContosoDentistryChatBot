@@ -2,6 +2,11 @@
 // Licensed under the MIT License.
 
 const { ActivityHandler } = require('botbuilder');
+var request = require('request');
+//const dotenv = require('dotenv');
+
+//const ENV_FILE = './.env';
+//dotenv.config({ path: ENV_FILE });
 
 /**
  * A simple bot that responds to utterances with answers from QnA Maker.
@@ -28,6 +33,36 @@ class QnABot extends ActivityHandler {
         this.onMessage(async (context, next) => {
             console.log('Running dialog with Message Activity.');
 
+            /*var headers = {
+                'Ocp-Apim-Subscription-Key': 'dfa0ed961c7849b89eb0132191b7ca75',
+                'Apim-Request-Id': '4ffcac1c-b2fc-48ba-bd6d-b69d9942995a',
+                'Content-Type': 'application/json'
+            };
+
+            var dataString = '{"kind":"Conversation","analysisInput":{"conversationItem":{"id":"1","text":"hello","modality":"text","language":"en-US","participantId":"1"}},"parameters":{"projectName":"dentist-assistant","verbose":true,"deploymentName":"dental-assistant-op","stringIndexType":"TextElement_V8"}}';
+            
+            var options = {
+                url: 'https://myudacitylanguageservice10.cognitiveservices.azure.com/language/:analyze-conversations?api-version=2022-10-01-preview',
+                method: 'POST',
+                headers: headers,
+                body: dataString
+            };
+            
+            function callback(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    var result = JSON.parse(body);
+                    //if(
+                    //    result['result']['prediction']['topIntent'] === 'GetAvailability'
+                    //)
+                    console.log("It works.");
+                    //console.log(result['result']['prediction']['topIntent']);
+                    //console.log(result['result']['prediction']['intents']['GetAvailability']['confidenceScore']);
+                }
+                else{this.dialog.run(context, this.dialogState);};
+            }
+
+            request(options, callback);*/
+
             // Run the Dialog with the new message Activity.
             await this.dialog.run(context, this.dialogState);
 
@@ -42,7 +77,7 @@ class QnABot extends ActivityHandler {
                 if (membersAdded[cnt].id !== context.activity.recipient.id) {
                     const defaultWelcome = process.env.DefaultWelcomeMessage;
                     if (defaultWelcome !== '') await context.sendActivity(defaultWelcome);
-                    else await context.sendActivity('Welcome to the QnA Maker sample! Ask me a question and I will try to answer it.');
+                    else await context.sendActivity('Welcome to Contoso Dentistry! How can we help?');
                 }
             }
 
