@@ -112,6 +112,7 @@ class QnABot extends ActivityHandler {
             await next();
         });
 
+
         // If a new user is added to the conversation, send them a greeting message
         this.onMembersAdded(async (context, next) => {
             const membersAdded = context.activity.membersAdded;
@@ -119,7 +120,7 @@ class QnABot extends ActivityHandler {
                 if (membersAdded[cnt].id !== context.activity.recipient.id) {
                     const defaultWelcome = process.env.DefaultWelcomeMessage;
                     if (defaultWelcome !== '') await context.sendActivity(defaultWelcome);
-                    else await context.sendActivity('Welcome to Contoso Dentistry! How can we help?');
+                    else await context.sendActivity('Welcome to the QnA Maker sample! Ask me a question and I will try to answer it.');
                 }
             }
 
