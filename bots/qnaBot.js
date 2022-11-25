@@ -34,8 +34,6 @@ class QnABot extends ActivityHandler {
         this.onMessage(async (context, next) => {
             console.log('Running dialog with Message Activity.');
 
-            
-
             const response = await axios.post(
                 process.env.Endpoint,
                 {
@@ -68,6 +66,7 @@ class QnABot extends ActivityHandler {
                 }
             );
 
+            if (response.status === 200){
             if (response['data']['result']['prediction']['topIntent'] === 'GetAvailability' 
                 && response['data']['result']['prediction']['intents']['GetAvailability']['confidenceScore'] > 0.5){
                     const answer = await axios.get(process.env.AvailabilityEndpoint);
@@ -90,10 +89,20 @@ class QnABot extends ActivityHandler {
                     await context.sendActivity(`Your appointment has been set for ${response['data']['result']['prediction']['intents']['ScheduleAppointment']['result']['prediction']['entities'][0]['text']}`);
                     }
 
-            if (response['data']['result']['prediction']['topIntent'] === 'GeneralQueries' 
-                && response['data']['result']['prediction']['intents']['GeneralQueries']['confidenceScore'] > 0.5){
+            if (response['data']['result']['prediction']['topIntent'] === 'GeneralQueries'
+            && response['data']['result']['prediction']['intents']['GeneralQueries']['confidenceScore'] > 0.5){
                            await context.sendActivity(response['data']['result']['prediction']['intents']['GeneralQueries']['result']['answers'][0]['answer']);
                         }
+            if (response['data']['result']['prediction']['topIntent'] === 'ScheduleAppointment' 
+                && response['data']['result']['prediction']['intents']['ScheduleAppointment']['confidenceScore'] < 0.5
+                ||response['data']['result']['prediction']['topIntent'] === 'GeneralQueries' 
+                && response['data']['result']['prediction']['intents']['GeneralQueries']['confidenceScore'] < 0.5
+                ||response['data']['result']['prediction']['topIntent'] === 'GetAvailability' 
+                && response['data']['result']['prediction']['intents']['GetAvailability']['confidenceScore'] < 0.5){
+                    await context.sendActivity("I didn't quite understand. Please try again...");
+                }
+            }
+            else{context.sendActivity("Please try again.");};
 
 
             // Run the Dialog with the new message Activity.
