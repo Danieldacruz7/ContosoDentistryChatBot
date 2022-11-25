@@ -4,6 +4,7 @@
 const { ActivityHandler } = require('botbuilder');
 var request = require('request');
 const dotenv = require('dotenv');
+const axios = require('axios');
 
 const ENV_FILE = './.env';
 dotenv.config({ path: ENV_FILE });
@@ -33,67 +34,67 @@ class QnABot extends ActivityHandler {
         this.onMessage(async (context, next) => {
             console.log('Running dialog with Message Activity.');
 
+            
 
-            var headers = {
-                'Ocp-Apim-Subscription-Key': process.env.OcpApimSubscriptionKey,
-                'Apim-Request-Id': process.env.ApimRequestId,
-                'Content-Type': 'application/json'
-            };
-
-            var dataString = `{"kind":"Conversation","analysisInput":{"conversationItem":{"id":"1","text":"${context._activity.text}","modality":"text","language":"en-US","participantId":"1"}},"parameters":{"projectName":"dental-assistant-workflow","verbose":true,"deploymentName":"final-deployment","stringIndexType":"TextElement_V8"}}`;
-            //console.log(dataString);
-
-            var options = {
-                url: process.env.Endpoint,
-                method: 'POST',
-                headers: headers,
-                body: dataString
-            };
-
-            async function thefunction(context, state){
-                await this.dialog.run(context, state);
-            };
-
-            function callback(error, response, body) {     
-                //console.log(body);
-                //console.log(error);
-                //console.log(error);           
-                if (!error && response.statusCode == 200) {
-                    var result = JSON.parse(body);
-                    console.log("------body------");
-                    console.log(result);
-                    console.log("------body------");
-                    //console.log(result['result']['prediction']['intents']['GeneralQueries']['result']['answers'][0]['answer']);
-                    console.log("------response------");
-                    //console.log(response);
-                    //console.log(result);
-                    //console.log("------response------");
-                    console.log(result['result']['prediction']['topIntent']);
-                    //console.log("------response------");
-                    //console.log(result['result']['prediction']['intents']);
-                    //console.log("------response------");
-                    //console.log(result['result']['prediction']['intents']['GetAvailability']['confidenceScore']);
-
-                    if (result['result']['prediction']['topIntent'] === 'GetAvailablility' 
-                        && result['result']['prediction']['intents']['GetAvailablility']['confidenceScore'] > 0.5){
-                        console.log("Get available.");
-                        };
-                    if (result['result']['prediction']['topIntent'] === 'ScheduleApointment' 
-                        && result['result']['prediction']['intents']['ScheduleApointment']['confidenceScore'] > 0.5){
-                            console.log(result['result']['prediction']['intents']['ScheduleApointment']['result']['prediction']['entities'][0]['text']);
+            const response = await axios.post(
+                process.env.Endpoint,
+                {
+                    'kind': 'Conversation',
+                    'analysisInput': {
+                        'conversationItem': {
+                            'id': '1',
+                            'text': context._activity.text,
+                            'modality': 'text',
+                            'language': 'en-US',
+                            'participantId': '1'
                         }
-                    if (result['result']['prediction']['topIntent'] === 'GeneralQueries' 
-                        && result['result']['prediction']['intents']['GeneralQueries']['confidenceScore'] > 0.5){
-                            console.log(result['result']['prediction']['intents']['GeneralQueries']['result']['answers'][0]['answer']);
-                        }
-                   //else{
-                    //    thefunction(context, this.dialogState);
-                    //};*/
+                    },
+                    'parameters': {
+                        'projectName': 'dental-assistant-workflow',
+                        'verbose': true,
+                        'deploymentName': 'dental-assistant-final-deployment',
+                        'stringIndexType': 'TextElement_V8'
+                    }
+                },
+                {
+                    params: {
+                        'api-version': '2022-10-01-preview'
+                    },
+                    headers: {
+                        'Ocp-Apim-Subscription-Key': process.env.OcpApimSubscriptionKey,
+                        'Apim-Request-Id': process.env.ApimRequestId,
+                        'Content-Type': 'application/json'
+                    }
                 }
-                
-            }
+            );
 
-            request(options, callback);
+            if (response['data']['result']['prediction']['topIntent'] === 'GetAvailability' 
+                && response['data']['result']['prediction']['intents']['GetAvailability']['confidenceScore'] > 0.5){
+                    const answer = await axios.get(process.env.AvailabilityEndpoint);
+                    await context.sendActivity(`Here is a list of all the available times: ${answer['data']}`);
+                        }
+
+           if (response['data']['result']['prediction']['topIntent'] === 'ScheduleAppointment' 
+                && response['data']['result']['prediction']['intents']['ScheduleAppointment']['confidenceScore'] > 0.5){
+                    const schedule = await axios.post(
+                        process.env.ScheduleEndpoint,
+                        {
+                            'Time': response['data']['result']['prediction']['intents']['ScheduleAppointment']['result']['prediction']['entities'][0]['text']
+                        },
+                        {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+                    await context.sendActivity(`Your appointment has been set for ${response['data']['result']['prediction']['intents']['ScheduleAppointment']['result']['prediction']['entities'][0]['text']}`);
+                    }
+
+            if (response['data']['result']['prediction']['topIntent'] === 'GeneralQueries' 
+                && response['data']['result']['prediction']['intents']['GeneralQueries']['confidenceScore'] > 0.5){
+                           await context.sendActivity(response['data']['result']['prediction']['intents']['GeneralQueries']['result']['answers'][0]['answer']);
+                        }
+
 
             // Run the Dialog with the new message Activity.
             //await this.dialog.run(context, this.dialogState);
