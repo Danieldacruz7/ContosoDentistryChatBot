@@ -90,6 +90,10 @@ server.post('/api/messages', (req, res) => {
     });
 });
 
+server.get('/', (req, res) => {
+    res.json({ message: "hello world" })
+});
+
 // SIG // Begin signature block
 // SIG // MIIrYgYJKoZIhvcNAQcCoIIrUzCCK08CAQExDzANBglg
 // SIG // hkgBZQMEAgEFADB3BgorBgEEAYI3AgEEoGkwZzAyBgor
