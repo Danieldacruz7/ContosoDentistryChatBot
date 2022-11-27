@@ -52,5 +52,5 @@ jobs:
         with:
           app-name: 'dental-assistant-bot-logic'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_410CA3AC8FC4440AB4E8496D3A58EBF7 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D456210B580C49759684555B2640D3D6 }}
           package: .
