@@ -35,7 +35,7 @@ class QnABot extends ActivityHandler {
             console.log('Running dialog with Message Activity.');
 
             const response = await axios.post(
-                'https://dental-assistant-language-service.cognitiveservices.azure.com/language/:analyze-conversations',
+                'https://dental-assistant-langservice.cognitiveservices.azure.com/language/:analyze-conversations',
                 {
                     'kind': 'Conversation',
                     'analysisInput': {
@@ -50,7 +50,7 @@ class QnABot extends ActivityHandler {
                     'parameters': {
                         'projectName': 'dental-assistant-workflow',
                         'verbose': true,
-                        'deploymentName': 'dental-assistant-final-deployment',
+                        'deploymentName': 'dental-assistant-deployment',
                         'stringIndexType': 'TextElement_V8'
                     }
                 },
@@ -59,7 +59,7 @@ class QnABot extends ActivityHandler {
                         'api-version': '2022-10-01-preview'
                     },
                     headers: {
-                        'Ocp-Apim-Subscription-Key': '9ef911132f60484ab844702cc4b8fda2',
+                        'Ocp-Apim-Subscription-Key': 'a0485a45bcf0479290891c881dcf5b01',
                         'Apim-Request-Id': '4ffcac1c-b2fc-48ba-bd6d-b69d9942995a',
                         'Content-Type': 'application/json'
                     }
@@ -69,14 +69,14 @@ class QnABot extends ActivityHandler {
             if (response.status === 200){
             if (response['data']['result']['prediction']['topIntent'] === 'GetAvailability' 
                 && response['data']['result']['prediction']['intents']['GetAvailability']['confidenceScore'] > 0.5){
-                    const answer = await axios.get("https://dental-assistant-scheduler.azurewebsites.net/availability");
+                    const answer = await axios.get("https://dental-assistant-scheduler10.azurewebsites.net/availability");
                     await context.sendActivity(`Here is a list of all the available times: ${answer['data']}`);
                         }
 
            if (response['data']['result']['prediction']['topIntent'] === 'ScheduleAppointment' 
                 && response['data']['result']['prediction']['intents']['ScheduleAppointment']['confidenceScore'] > 0.5){
                     const schedule = await axios.post(
-                        "https://dental-assistant-scheduler.azurewebsites.net/schedule",
+                        "https://dental-assistant-scheduler10.azurewebsites.net/schedule",
                         {
                             'Time': response['data']['result']['prediction']['intents']['ScheduleAppointment']['result']['prediction']['entities'][0]['text']
                         },
