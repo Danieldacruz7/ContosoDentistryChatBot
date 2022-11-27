@@ -2,12 +2,6 @@
 // Licensed under the MIT License.
 
 const { ActivityHandler } = require('botbuilder');
-var request = require('request');
-const dotenv = require('dotenv');
-const axios = require('axios');
-
-const ENV_FILE = './.env';
-dotenv.config({ path: ENV_FILE });
 
 /**
  * A simple bot that responds to utterances with answers from QnA Maker.
@@ -34,84 +28,12 @@ class QnABot extends ActivityHandler {
         this.onMessage(async (context, next) => {
             console.log('Running dialog with Message Activity.');
 
-            const response = await axios.post(
-                'https://dental-assistant-langservice.cognitiveservices.azure.com/language/:analyze-conversations',
-                {
-                    'kind': 'Conversation',
-                    'analysisInput': {
-                        'conversationItem': {
-                            'id': '1',
-                            'text': context._activity.text,
-                            'modality': 'text',
-                            'language': 'en-US',
-                            'participantId': '1'
-                        }
-                    },
-                    'parameters': {
-                        'projectName': 'dental-assistant-workflow',
-                        'verbose': true,
-                        'deploymentName': 'dental-assistant-deployment',
-                        'stringIndexType': 'TextElement_V8'
-                    }
-                },
-                {
-                    params: {
-                        'api-version': '2022-10-01-preview'
-                    },
-                    headers: {
-                        'Ocp-Apim-Subscription-Key': 'a0485a45bcf0479290891c881dcf5b01',
-                        'Apim-Request-Id': '4ffcac1c-b2fc-48ba-bd6d-b69d9942995a',
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            if (response.status === 200){
-            if (response['data']['result']['prediction']['topIntent'] === 'GetAvailability' 
-                && response['data']['result']['prediction']['intents']['GetAvailability']['confidenceScore'] > 0.5){
-                    const answer = await axios.get("https://dental-assistant-scheduler10.azurewebsites.net/availability");
-                    await context.sendActivity(`Here is a list of all the available times: ${answer['data']}`);
-                        }
-
-           if (response['data']['result']['prediction']['topIntent'] === 'ScheduleAppointment' 
-                && response['data']['result']['prediction']['intents']['ScheduleAppointment']['confidenceScore'] > 0.5){
-                    const schedule = await axios.post(
-                        "https://dental-assistant-scheduler10.azurewebsites.net/schedule",
-                        {
-                            'Time': response['data']['result']['prediction']['intents']['ScheduleAppointment']['result']['prediction']['entities'][0]['text']
-                        },
-                        {
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    );
-                    await context.sendActivity(`Your appointment has been set for ${response['data']['result']['prediction']['intents']['ScheduleAppointment']['result']['prediction']['entities'][0]['text']}`);
-                    }
-
-            if (response['data']['result']['prediction']['topIntent'] === 'GeneralQueries'
-            && response['data']['result']['prediction']['intents']['GeneralQueries']['confidenceScore'] > 0.5){
-                           await context.sendActivity(response['data']['result']['prediction']['intents']['GeneralQueries']['result']['answers'][0]['answer']);
-                        }
-            if (response['data']['result']['prediction']['topIntent'] === 'ScheduleAppointment' 
-                && response['data']['result']['prediction']['intents']['ScheduleAppointment']['confidenceScore'] < 0.5
-                ||response['data']['result']['prediction']['topIntent'] === 'GeneralQueries' 
-                && response['data']['result']['prediction']['intents']['GeneralQueries']['confidenceScore'] < 0.5
-                ||response['data']['result']['prediction']['topIntent'] === 'GetAvailability' 
-                && response['data']['result']['prediction']['intents']['GetAvailability']['confidenceScore'] < 0.5){
-                    await context.sendActivity("I didn't quite understand. Please try again...");
-                }
-            }
-            else{context.sendActivity("Please try again.");};
-
-
             // Run the Dialog with the new message Activity.
-            //await this.dialog.run(context, this.dialogState);
+            await this.dialog.run(context, this.dialogState);
 
             // By calling next() you ensure that the next BotHandler is run.
             await next();
         });
-
 
         // If a new user is added to the conversation, send them a greeting message
         this.onMembersAdded(async (context, next) => {
@@ -120,7 +42,7 @@ class QnABot extends ActivityHandler {
                 if (membersAdded[cnt].id !== context.activity.recipient.id) {
                     const defaultWelcome = process.env.DefaultWelcomeMessage;
                     if (defaultWelcome !== '') await context.sendActivity(defaultWelcome);
-                    else await context.sendActivity('Welcome to Contoso Dentistry! How can I help?');
+                    else await context.sendActivity('Welcome to the QnA Maker sample! Ask me a question and I will try to answer it.');
                 }
             }
 
